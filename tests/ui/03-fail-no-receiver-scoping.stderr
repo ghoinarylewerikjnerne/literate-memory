@@ -1,0 +1,17 @@
+error[E0425]: cannot find value `field_a` in this scope
+  --> tests/ui/03-fail-no-receiver-scoping.rs:14:60
+   |
+5  |         pub field_a: i32,
+   |             ------- a field by that name exists in `Self`
+...
+14 |             println!("no_receiver called: a = {}, b = {}", field_a, field_b);
+   |                                                            ^^^^^^^
+
+error[E0425]: cannot find value `field_b` in this scope
+  --> tests/ui/03-fail-no-receiver-scoping.rs:14:69
+   |
+6  |         pub field_b: i32,
+   |             ------- a field by that name exists in `Self`
+...
+14 |             println!("no_receiver called: a = {}, b = {}", field_a, field_b);
+   |                                                                     ^^^^^^^

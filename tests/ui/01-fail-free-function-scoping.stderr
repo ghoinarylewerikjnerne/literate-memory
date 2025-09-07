@@ -1,0 +1,5 @@
+error[E0425]: cannot find value `field_a` in this scope
+  --> tests/ui/01-fail-free-function-scoping.rs:13:65
+   |
+13 |         println!("non_assoc_method called with a.field_a = {}", field_a);
+   |                                                                 ^^^^^^^ not found in this scope
