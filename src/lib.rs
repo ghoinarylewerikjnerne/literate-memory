@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream, Result},
-    parse_macro_input, Fields, FnArg, Ident, ImplItem, ImplItemFn, Expr, Item,
+    parse_macro_input, Fields, FnArg, Ident, ImplItem, Expr, Item,
 };
 use syn::visit_mut::{self, VisitMut};
 
@@ -85,9 +85,13 @@ pub fn bind_fields(input: TokenStream) -> TokenStream {
                 .collect();
 
             for item in &mut impl_def.items {
-                if let ImplItem::Fn(ImplItemFn { sig, block, .. }) = item {
-                    if sig.receiver().is_some() {
-                        let is_ref = sig.inputs.iter().any(|arg| match arg {
+                if let ImplItem::Fn(method) = item {
+                    if method.sig.receiver().is_some() {
+                        // Add the allow attribute to suppress incorrect warnings
+                        let allow_attr: syn::Attribute = syn::parse_quote! { #[allow(unused_variables)] };
+                        method.attrs.push(allow_attr);
+
+                        let is_ref = method.sig.inputs.iter().any(|arg| match arg {
                             FnArg::Receiver(rec) => rec.reference.is_some(),
                             _ => false,
                         });
@@ -98,13 +102,13 @@ pub fn bind_fields(input: TokenStream) -> TokenStream {
                             quote! { let #struct_ident { #(#idents),* } = self; }
                         };
                         let let_stmt: syn::Stmt = syn::parse_quote! { #binding };
-                        block.stmts.insert(0, let_stmt);
+                        method.block.stmts.insert(0, let_stmt);
 
                         // Traverse the method body to rewrite method calls
                         let mut visitor = MethodCallVisitor {
                             method_names: &method_names,
                         };
-                        visitor.visit_block_mut(block);
+                        visitor.visit_block_mut(&mut method.block);
                     }
                 }
             }
