@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream, Result},
-    parse_macro_input, Fields, FnArg, Ident, ImplItem, Expr, Item,
+    parse_macro_input, Fields, Ident, ImplItem, Expr, Item,
 };
 use syn::visit_mut::{self, VisitMut};
 
@@ -24,94 +24,84 @@ impl Parse for MacroInput {
 pub fn bind_fields(input: TokenStream) -> TokenStream {
     let mut macro_input = parse_macro_input!(input as MacroInput);
 
-    // Find the main struct and its index
-    let struct_info = macro_input.items.iter().enumerate().find_map(|(i, item)| {
-        if let Item::Struct(s) = item { Some((i, s.ident.clone())) } else { None }
-    });
+    // Find the main struct (if any) and clone its info.
+    let main_struct = match macro_input.items.iter().find_map(|item| {
+        if let Item::Struct(s) = item { Some(s.clone()) } else { None }
+    }) {
+        Some(s) => s,
+        None => {
+            // No struct found, return original input
+            let items = macro_input.items;
+            return TokenStream::from(quote! { #(#items)* });
+        }
+    };
 
-    if let Some((struct_index, struct_ident)) = struct_info {
-        // Find the corresponding impl block and its index
-        let impl_index = macro_input.items.iter().position(|item| {
-            if let Item::Impl(i) = item {
-                if let syn::Type::Path(type_path) = &*i.self_ty {
-                    return type_path.path.is_ident(&struct_ident);
-                }
-            }
-            false
-        });
+    let struct_ident = &main_struct.ident;
+    let fields = match &main_struct.fields {
+        Fields::Named(named) => &named.named,
+        _ => {
+            return syn::Error::new_spanned(
+                struct_ident,
+                "bind_fields only supports structs with named fields",
+            )
+            .to_compile_error()
+            .into();
+        }
+    };
+    let field_idents: Vec<&Ident> = fields
+        .iter()
+        .map(|f| f.ident.as_ref().expect("named fields should have idents"))
+        .collect();
 
-        if let Some(impl_index) = impl_index {
-            // We have both indices, now we can get mutable references
-            let (struct_item, impl_item) = if struct_index < impl_index {
-                let (left, right) = macro_input.items.split_at_mut(impl_index);
-                (&mut left[struct_index], &mut right[0])
-            } else {
-                let (left, right) = macro_input.items.split_at_mut(struct_index);
-                (&mut right[0], &mut left[impl_index])
-            };
-
-            if let (Item::Struct(struct_def), Item::Impl(impl_def)) = (struct_item, impl_item) {
-                let fields = match &struct_def.fields {
-                    Fields::Named(named) => &named.named,
-                    _ => {
-                        return syn::Error::new_spanned(
-                            &struct_ident,
-                        "bind_fields only supports structs with named fields",
-                    )
-                    .to_compile_error()
-                    .into();
-                }
-            };
-
-            let idents: Vec<&Ident> = fields
-                .iter()
-                .map(|f| f.ident.as_ref().expect("named fields should have idents"))
-                .collect();
-
-            let method_names: Vec<Ident> = impl_def
-                .items
-                .iter()
-                .filter_map(|item| {
-                    if let ImplItem::Fn(method) = item {
-                        if method.sig.receiver().is_some() {
-                            Some(method.sig.ident.clone())
-                        } else {
-                            None
+    // Collect all method names with `self` receivers from all relevant impl blocks first.
+    let all_method_names: Vec<Ident> = macro_input.items.iter().flat_map(|item| {
+        if let Item::Impl(impl_def) = item {
+            if let syn::Type::Path(type_path) = &*impl_def.self_ty {
+                if type_path.path.segments.last().map_or(false, |s| s.ident == *struct_ident) {
+                    return impl_def.items.iter().filter_map(|item| {
+                        if let ImplItem::Fn(method) = item {
+                            if method.sig.receiver().is_some() {
+                                return Some(method.sig.ident.clone());
+                            }
                         }
-                    } else {
                         None
-                    }
-                })
-                .collect();
-
-            for item in &mut impl_def.items {
-                if let ImplItem::Fn(method) = item {
-                    if method.sig.receiver().is_some() {
-                        // Add the allow attribute to suppress incorrect warnings
-                        let allow_attr: syn::Attribute = syn::parse_quote! { #[allow(unused_variables)] };
-                        method.attrs.push(allow_attr);
-
-                        let is_ref = method.sig.inputs.iter().any(|arg| match arg {
-                            FnArg::Receiver(rec) => rec.reference.is_some(),
-                            _ => false,
-                        });
-
-                        let binding = if is_ref {
-                            quote! { let #struct_ident { #(#idents),* } = *self; }
-                        } else {
-                            quote! { let #struct_ident { #(#idents),* } = self; }
-                        };
-                        let let_stmt: syn::Stmt = syn::parse_quote! { #binding };
-                        method.block.stmts.insert(0, let_stmt);
-
-                        // Traverse the method body to rewrite method calls
-                        let mut visitor = MethodCallVisitor {
-                            method_names: &method_names,
-                        };
-                        visitor.visit_block_mut(&mut method.block);
-                    }
+                    }).collect::<Vec<_>>();
                 }
             }
+        }
+        Vec::new()
+    }).collect();
+
+    // Iterate through all items mutably, find impls for our struct, and transform them.
+    for item in &mut macro_input.items {
+        if let Item::Impl(impl_def) = item {
+            if let syn::Type::Path(type_path) = &*impl_def.self_ty {
+                if type_path.path.segments.last().map_or(false, |s| s.ident == *struct_ident) {
+                    // This is a matching impl block, so we process it.
+                    for item in &mut impl_def.items {
+                        if let ImplItem::Fn(method) = item {
+                            if method.sig.receiver().is_some() {
+                                // Add the allow attribute
+                                let allow_attr: syn::Attribute = syn::parse_quote! { #[allow(unused_variables)] };
+                                method.attrs.push(allow_attr);
+
+                                // Insert field bindings
+                                for field_ident in field_idents.iter().rev() {
+                                    let let_stmt: syn::Stmt = syn::parse_quote! {
+                                        let #field_ident = &self.#field_ident;
+                                    };
+                                    method.block.stmts.insert(0, let_stmt);
+                                }
+
+                                // Rewrite method calls
+                                let mut visitor = MethodCallVisitor {
+                                    method_names: &all_method_names,
+                                };
+                                visitor.visit_block_mut(&mut method.block);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
