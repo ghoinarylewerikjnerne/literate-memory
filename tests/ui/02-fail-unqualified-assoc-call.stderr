@@ -1,0 +1,10 @@
+error[E0425]: cannot find function `method_a3` in this scope
+  --> tests/ui/02-fail-unqualified-assoc-call.rs:14:13
+   |
+14 |             method_a3();
+   |             ^^^^^^^^^ not found in this scope
+   |
+help: consider using the associated function on `Self`
+   |
+14 |             Self::method_a3();
+   |             ++++++
