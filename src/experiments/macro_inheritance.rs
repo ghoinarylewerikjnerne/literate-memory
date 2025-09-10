@@ -39,48 +39,35 @@ pub trait CanineBehavior {
     fn howl(&self) -> &str;
 }
 
-// Define the concrete data structs
-pub struct WargData {
-    pub mood: &'static str,
-}
-pub struct WolfData {
-    pub mood: &'static str,
-}
+// --- Refactored Concrete Class Definitions using the new macro ---
 
-// Implement the behavior for the data structs
-impl CanineBehavior for WargData {
-    fn howl(&self) -> &str {
-        "a menacing, deep howl"
+define_concrete_class! {
+    WargData {
+        pub mood: &'static str,
+    },
+    impl CanineBehavior {
+        fn howl(&self) -> &str { "a menacing, deep howl" }
+    },
+    impl FoodPreference {
+        fn preferred_food(&self) -> &str { "meat" }
+    },
+    impl HasMood {
+        fn get_mood(&self) -> &str { self.mood }
     }
 }
 
-impl CanineBehavior for WolfData {
-    fn howl(&self) -> &str {
-        "a lonely, high-pitched howl"
-    }
-}
-
-impl FoodPreference for WargData {
-    fn preferred_food(&self) -> &str {
-        "meat"
-    }
-}
-
-impl FoodPreference for WolfData {
-    fn preferred_food(&self) -> &str {
-        "rabbits"
-    }
-}
-
-impl HasMood for WargData {
-    fn get_mood(&self) -> &str {
-        self.mood
-    }
-}
-
-impl HasMood for WolfData {
-    fn get_mood(&self) -> &str {
-        self.mood
+define_concrete_class! {
+    WolfData {
+        pub mood: &'static str,
+    },
+    impl CanineBehavior {
+        fn howl(&self) -> &str { "a lonely, high-pitched howl" }
+    },
+    impl FoodPreference {
+        fn preferred_food(&self) -> &str { "rabbits" }
+    },
+    impl HasMood {
+        fn get_mood(&self) -> &str { self.mood }
     }
 }
 

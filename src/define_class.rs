@@ -1,15 +1,14 @@
 #[macro_export]
 macro_rules! define_concrete_class {
     (
-        data_struct $data_name:ident,
-        state: {
+        $data_name:ident {
             $($field_vis:vis $field_name:ident : $field_type:ty),* $(,)?
         },
-        impls: {
-            $($trait_name:ident => {
+        $(
+            impl $trait_name:ident {
                 $($method:item)*
-            }),* $(,)?
-        }
+            }
+        ),* $(,)?
     ) => {
         // Step 1: Define the data struct
         pub struct $data_name {

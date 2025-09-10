@@ -12,7 +12,7 @@ fn main() {
 
     if args.len() < 2 {
         println!("Please provide an experiment name to run.");
-        println!("Available experiments: inheritance_simulation, macro_inheritance, unified_macro");
+        println!("Available experiments: inheritance_simulation, macro_inheritance");
         return;
     }
 
@@ -25,12 +25,9 @@ fn main() {
         "macro_inheritance" => {
             experiments::macro_inheritance::run_experiment();
         }
-        "unified_macro" => {
-            experiments::unified_macro::run_experiment();
-        }
         _ => {
             println!("Experiment '{}' not found.", experiment_name);
-            println!("Available experiments: inheritance_simulation, macro_inheritance, unified_macro");
+            println!("Available experiments: inheritance_simulation, macro_inheritance");
         }
     }
 }
