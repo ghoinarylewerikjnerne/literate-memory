@@ -17,6 +17,18 @@ impl<T: FoodPreference> Animal<T> {
     }
 }
 
+// Implement a method on the Dog class
+impl<T: HasMood> Dog<T> {
+    pub fn check_mood(&self) -> String {
+        format!("seems to be in a {} mood.", self.get_mood())
+    }
+}
+
+// Trait to define mood
+pub trait HasMood {
+    fn get_mood(&self) -> &str;
+}
+
 // Trait to define food preference
 pub trait FoodPreference {
     fn preferred_food(&self) -> &str;
@@ -28,8 +40,12 @@ pub trait CanineBehavior {
 }
 
 // Define the concrete data structs
-pub struct WargData;
-pub struct WolfData;
+pub struct WargData {
+    pub mood: &'static str,
+}
+pub struct WolfData {
+    pub mood: &'static str,
+}
 
 // Implement the behavior for the data structs
 impl CanineBehavior for WargData {
@@ -56,22 +72,37 @@ impl FoodPreference for WolfData {
     }
 }
 
+impl HasMood for WargData {
+    fn get_mood(&self) -> &str {
+        self.mood
+    }
+}
+
+impl HasMood for WolfData {
+    fn get_mood(&self) -> &str {
+        self.mood
+    }
+}
+
 pub fn run_experiment() {
     println!("--- Running Macro-Powered Inheritance Experiment ---");
 
-    let warg = Warg::new(WargData);
-    let wolf = Wolf::new(WolfData);
+    // Create instances with different, personal moods
+    let warg1 = Warg::new(WargData { mood: "grumpy" });
+    let warg2 = Warg::new(WargData { mood: "excited" });
+    let wolf1 = Wolf::new(WolfData { mood: "lonely" });
 
-    // Thanks to the `Deref` trait implementations in the macro,
-    // we can call the `howl` method directly on the `Warg` and `Wolf` objects.
-    // The calls are "statically dispatched" to the correct implementation at compile time.
-    println!("The warg lets out {}", warg.howl());
-    println!("The wolf lets out {}", wolf.howl());
+    // Demonstrate inherited methods
+    println!("The first warg lets out {}", warg1.howl());
+    println!("The second warg {}", warg2.eat());
+    println!("The wolf {}", wolf1.eat());
 
-    // Now, let's call the `eat` method defined on the `Animal` class.
-    // This works because `Warg` and `Wolf` deref to `Dog`, which derefs to `Animal`.
-    println!("The warg {}", warg.eat());
-    println!("The wolf {}", wolf.eat());
+    println!("\n--- Checking Personal Moods ---");
+    // Demonstrate instance-specific mood
+    println!("The first warg {}", warg1.check_mood());
+    println!("The second warg {}", warg2.check_mood());
+    println!("The wolf {}", wolf1.check_mood());
 
-    println!("--- Experiment Finished ---");
+
+    println!("\n--- Experiment Finished ---");
 }
