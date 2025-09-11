@@ -5,6 +5,8 @@ use std::env;
 pub mod define_object;
 #[macro_use]
 pub mod define_class;
+#[macro_use]
+pub mod macros;
 pub mod experiments;
 
 fn main() {
@@ -12,7 +14,7 @@ fn main() {
 
     if args.len() < 2 {
         println!("Please provide an experiment name to run.");
-        println!("Available experiments: inheritance_simulation, macro_inheritance");
+        println!("Available experiments: inheritance_simulation, macro_inheritance, complete_class_experiment");
         return;
     }
 
@@ -25,9 +27,12 @@ fn main() {
         "macro_inheritance" => {
             experiments::macro_inheritance::run_experiment();
         }
+        "complete_class_experiment" => {
+            experiments::complete_class_experiment::run_experiment();
+        }
         _ => {
             println!("Experiment '{}' not found.", experiment_name);
-            println!("Available experiments: inheritance_simulation, macro_inheritance");
+            println!("Available experiments: inheritance_simulation, macro_inheritance, complete_class_experiment");
         }
     }
 }
