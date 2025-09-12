@@ -1,4 +1,4 @@
 #[macro_use]
 pub mod complete_class;
 #[macro_use]
-pub mod class_hierarchy;
+pub mod hybrid_macros;
