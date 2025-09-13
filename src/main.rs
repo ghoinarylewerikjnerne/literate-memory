@@ -30,6 +30,11 @@ fn main() {
         "complete_class_experiment" => {
             experiments::complete_class_experiment::run_experiment();
         }
+        // The "new_art_experiment" is preserved as a non-compiling piece of art.
+        // It is not runnable, but exists in the codebase as a testament to the journey.
+        // "new_art_experiment" => {
+        //     experiments::new_art_experiment::run_experiment();
+        // }
         _ => {
             println!("Experiment '{}' not found.", experiment_name);
             println!("Available experiments: inheritance_simulation, macro_inheritance, complete_class_experiment");
