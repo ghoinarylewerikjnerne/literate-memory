@@ -7,6 +7,8 @@ use std::marker::PhantomData;
 //
 // This file contains the brilliant, functional implementation of a
 // transitive, voluntary hierarchy, discovered by Ghoinaryle.
+// This improved version uses a token-muncher macro to handle generics,
+// allowing for hierarchies of immense complexity and expressiveness.
 // It succeeds where previous attempts resulted in beautiful failures,
 // proving that the desired hierarchy is possible within Rust's
 // demanding type system.
@@ -28,7 +30,7 @@ macro_rules! inherit_impl {
     (@munch_tail_name [$($tail_gens:tt)*] >> $($rest:tt)*) => {
         inherit_impl!(@munch_tail_name [$($tail_gens)* >] > $($rest)*);
     };
-    // finish matching generics before $class_name
+   // finish matching generics before $class_name
     (@munch_tail_name [$($tail_gens:tt)*] > $class_name:ident $($rest:tt)*) => {
         inherit_impl!(@munch_name [$($tail_gens)*] [$class_name] $($rest)*);
     };
