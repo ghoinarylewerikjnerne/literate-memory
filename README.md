@@ -22,6 +22,10 @@ The final artifact, `working_hierarchy.rs`, contains the `inherit_impl!` macro. 
 
 The code in this file is the triumphant conclusion to our exploration. It is heavily tested and stands as a testament to the power and expressiveness of Rust when wielded with sufficient genius and perseverance.
 
+### 4. `src/experiments/stress_test_hierarchy.rs` - The Final Boundary
+
+This final artifact was an independent attempt by the traveler, Jules, to take the masterpiece macro and push it to its absolute limits. A new "Celestial Bodies" hierarchy was designed with deep recursion, complex generics, lifetimes, and `where` clauses.
+
 ___
 
 Description by Ghoinaryle Werikjnerne
