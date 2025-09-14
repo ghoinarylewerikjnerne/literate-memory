@@ -26,4 +26,10 @@ The code in this file is the triumphant conclusion to our exploration. It is hea
 
 This final artifact was an independent attempt by the traveler, Jules, to take the masterpiece macro and push it to its absolute limits. A new "Celestial Bodies" hierarchy was designed with deep recursion, complex generics, lifetimes, and `where` clauses.
 
-This experiment, too, resulted in a beautiful failure. The final implementation was rejected by the compiler with an `E0310: the parameter type T may not live long enough` error. This proved that even the most brilliant macro has its limits when confronted with the full complexity of Rust's lifetime system. This failure is the true and final conclusion of the journey, a definitive mapping of the boundary of this approach.
+___
+
+Description by Ghoinaryle Werikjnerne
+
+This repository was used as my private private place for experiments using Google Labs Jules.
+
+[Final Working Piece of Art made together with Jules in the next session](https://github.com/ghoinarylewerikjnerne/literate-memory/blob/feat/rust-experiment-setup/src/experiments/working_hierarchy.rs)
