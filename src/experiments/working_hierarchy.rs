@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use crate::inheritance::{*};
 use std::marker::PhantomData;
 
 // The Working Hierarchy: A Functional Masterpiece
@@ -11,178 +12,179 @@ use std::marker::PhantomData;
 // proving that the desired hierarchy is possible within Rust's
 // demanding type system.
 
-#[macro_export]
-macro_rules! inherit_impl {
+mod inheritance {
+    pub struct Object;
+    pub trait Class<T> { type Type; type Parent; }
+    pub trait Inherit<T> {}
+    impl Inherit<Object> for Object {}
 
-    // Tail class name
-
-    // with generics before $class_name
-    (< $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_tail_name [$add] $($rest)*);
-    };
-    // no generics before $class_name
-    ($class_name:ident $($rest:tt)*) => {
-        inherit_impl!(@munch_name [] [$class_name] $($rest)*);
-    };
-    // continue matching generics before $class_name (multi > case)
-    (@munch_tail_name [$($tail_gens:tt)*] >> $($rest:tt)*) => {
-        inherit_impl!(@munch_tail_name [$($tail_gens)* >] > $($rest)*);
-    };
-    // finish matching generics before $class_name
-    (@munch_tail_name [$($tail_gens:tt)*] > $class_name:ident $($rest:tt)*) => {
-        inherit_impl!(@munch_name [$($tail_gens)*] [$class_name] $($rest)*);
-    };
-    // continue matching generics before $class_name
-    (@munch_tail_name [$($tail_gens:tt)*] $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_tail_name [$($tail_gens)* $add] $($rest)*);
-    };
-
-    // Head class name
-
-    // with generics after $class_name
-    (@munch_name [$($tail_gens:tt)*] [$class_name:ident] < $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_head_name [$($tail_gens)*] [$class_name] [$add] $($rest)*);
-    };
-    // without generics after $class_name
-    (@munch_name [$($tail_gens:tt)*] [$class_name:ident] => $($rest:tt)*) => {
-        inherit_impl!(@munch_parent_name [$($tail_gens)*] [$class_name] [] $($rest)*);
-    };
-    // continue matching generics after $class_name (multi > case)
-    (@munch_head_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] >> $($rest:tt)*) => {
-        inherit_impl!(@munch_head_name [$($tail_gens)*] [$class_name] [$($head_gens)* >] > $($rest)*);
-    };
-    // finish matching generics after $class_name
-    (@munch_head_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] > => $($rest:tt)*) => {
-        inherit_impl!(@munch_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] $($rest)*);
-    };
-    // continue matching generics after $class_name
-    (@munch_head_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_head_name [$($tail_gens)*] [$class_name] [$($head_gens)* $add] $($rest)*);
-    };
-
-    // Tail parent name
-
-    // with generics before $parent_class_name
-    (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] < $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$add] $($rest)*);
-    };
-    // no generics before $parent_class_name
-    (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] $parent_class_name:ident $($rest:tt)*) => {
-        inherit_impl!(@munch_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [] [$parent_class_name] $($rest)*);
-    };
-    // continue matching generics before $parent_class_name (multi > case)
-    (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] >> $($rest:tt)*) => {
-        inherit_impl!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)* >] > $($rest)*);
-    };
-    // finish matching generics before $parent_class_name
-    (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] > $parent_class_name:ident $($rest:tt)*) => {
-        inherit_impl!(@munch_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] $($rest)*);
-    };
-    // continue matching generics before $parent_class_name
-    (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)* $add] $($rest)*);
-    };
-
-    // Head class name
-
-    // with generics after $parent_class_name
-    (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] < $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_head_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$add] $($rest)*);
-    };
-    // without generics after $parent_class_name
-    (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] $(where $($where_clause:tt)+)?) => {
-        inherit_impl!(@inner [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [] [$($($where_clause)+)?]);
-    };
-    // continue matching generics after $parent_class_name (multi > case)
-    (@munch_head_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] [$($head_parent_gens:tt)*] >> $($rest:tt)*) => {
-        inherit_impl!(@munch_head_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$($head_parent_gens)* >] > $($rest)*);
-    };
-    // finish matching generics after $parent_class_name
-    (@munch_head_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] [$($head_parent_gens:tt)*] > $(where $($where_clause:tt)+)?) => {
-        inherit_impl!(@inner [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$($head_parent_gens)*] [$($($where_clause)+)?]);
-    };
-    // continue matching generics after $parent_class_name
-    (@munch_head_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] [$($head_parent_gens:tt)*] $add:tt $($rest:tt)*) => {
-        inherit_impl!(@munch_head_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$($head_parent_gens)* $add] $($rest)*);
-    };
-
-    // Munch complete
-
-    (@inner
-        [$($($tail_gens:tt)+)?]
-        [$class_name:ident]
-        [$($($head_gens:tt)+)?]
-        [$($($tail_parent_gens:tt)+)?]
-        [$parent_class_name:ident]
-        [$($($head_parent_gens:tt)+)?]
-        [$($($where_clause:tt)+)?]
-    ) => {
-        impl $(<$($tail_gens)+>)? Inherit<$class_name $(<$($head_gens)*>)?> for $class_name $(<$($head_gens)*>)? $(where $($where_clause)+)? {}
-        impl $(<$($tail_gens)+>)? Class<Object> for $class_name $(<$($head_gens)*>)? $(where $($where_clause)+)? {
-            type Type = $class_name $(<$($head_gens)*>)?;
-            type Parent = $parent_class_name $(<$($head_parent_gens)*>)?;
-        }
-
-        impl<$($($tail_gens)+, )? $($($tail_parent_gens)+, )? ClassInheritorObject> Class<$class_name $(<$($head_gens)*>)?> for ClassInheritorObject
-        where
-            ClassInheritorObject: Class<Object>,
-            <ClassInheritorObject as Class<Object>>::Type: Inherit<$class_name $(<$($head_gens)*>)?>
-            $(, $($where_clause)+)?
-        {
-            type Type = ClassInheritorObject;
-            type Parent = $parent_class_name $(<$($head_parent_gens)*>)?;
-        }
-
-        impl<$($($tail_gens)+, )? ClassInheritorObject> Inherit<$class_name $(<$($head_gens)*>)?> for ClassInheritorObject
-        where
-            ClassInheritorObject: Class<Object>,
-            ClassInheritorObject: Class<<ClassInheritorObject as Class<Object>>::Type>,
-            <ClassInheritorObject as Class<<ClassInheritorObject as Class<Object>>::Type>>::Parent: Inherit<$class_name $(<$($head_gens)*>)?>
-            $(, $($where_clause)+)?
-        {}
-    };
+    #[macro_export]
+    macro_rules! inherit {
+        // Tail class name
+    
+        // with generics before $class_name
+        (< $add:tt $($rest:tt)*) => {
+            inherit!(@munch_tail_name [$add] $($rest)*);
+        };
+        // no generics before $class_name
+        ($class_name:ident $($rest:tt)*) => {
+            inherit!(@munch_name [] [$class_name] $($rest)*);
+        };
+        // continue matching generics before $class_name (multi > case)
+        (@munch_tail_name [$($tail_gens:tt)*] >> $($rest:tt)*) => {
+            inherit!(@munch_tail_name [$($tail_gens)* >] > $($rest)*);
+        };
+        // finish matching generics before $class_name
+        (@munch_tail_name [$($tail_gens:tt)*] > $class_name:ident $($rest:tt)*) => {
+            inherit!(@munch_name [$($tail_gens)*] [$class_name] $($rest)*);
+        };
+        // continue matching generics before $class_name
+        (@munch_tail_name [$($tail_gens:tt)*] $add:tt $($rest:tt)*) => {
+            inherit!(@munch_tail_name [$($tail_gens)* $add] $($rest)*);
+        };
+    
+        // Head class name
+    
+        // with generics after $class_name
+        (@munch_name [$($tail_gens:tt)*] [$class_name:ident] < $add:tt $($rest:tt)*) => {
+            inherit!(@munch_head_name [$($tail_gens)*] [$class_name] [$add] $($rest)*);
+        };
+        // without generics after $class_name
+        (@munch_name [$($tail_gens:tt)*] [$class_name:ident] => $($rest:tt)*) => {
+            inherit!(@munch_parent_name [$($tail_gens)*] [$class_name] [] $($rest)*);
+        };
+        // continue matching generics after $class_name (multi > case)
+        (@munch_head_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] >> $($rest:tt)*) => {
+            inherit!(@munch_head_name [$($tail_gens)*] [$class_name] [$($head_gens)* >] > $($rest)*);
+        };
+        // finish matching generics after $class_name
+        (@munch_head_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] > => $($rest:tt)*) => {
+            inherit!(@munch_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] $($rest)*);
+        };
+        // continue matching generics after $class_name
+        (@munch_head_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] $add:tt $($rest:tt)*) => {
+            inherit!(@munch_head_name [$($tail_gens)*] [$class_name] [$($head_gens)* $add] $($rest)*);
+        };
+    
+        // Tail parent name
+    
+        // with generics before $parent_class_name
+        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] < $add:tt $($rest:tt)*) => {
+            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$add] $($rest)*);
+        };
+        // no generics before $parent_class_name
+        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] $parent_class_name:ident $($rest:tt)*) => {
+            inherit!(@munch_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [] [$parent_class_name] $($rest)*);
+        };
+        // continue matching generics before $parent_class_name (multi > case)
+        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] >> $($rest:tt)*) => {
+            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)* >] > $($rest)*);
+        };
+        // finish matching generics before $parent_class_name
+        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] > $parent_class_name:ident $($rest:tt)*) => {
+            inherit!(@munch_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] $($rest)*);
+        };
+        // continue matching generics before $parent_class_name
+        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] $add:tt $($rest:tt)*) => {
+            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)* $add] $($rest)*);
+        };
+    
+        // Head class name
+    
+        // with generics after $parent_class_name
+        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] < $add:tt $($rest:tt)*) => {
+            inherit!(@munch_head_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$add] $($rest)*);
+        };
+        // without generics after $parent_class_name
+        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] $(where $($where_clause:tt)+)?) => {
+            inherit!(@inner [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [] [$($($where_clause)+)?]);
+        };
+        // continue matching generics after $parent_class_name (multi > case)
+        (@munch_head_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] [$($head_parent_gens:tt)*] >> $($rest:tt)*) => {
+            inherit!(@munch_head_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$($head_parent_gens)* >] > $($rest)*);
+        };
+        // finish matching generics after $parent_class_name
+        (@munch_head_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] [$($head_parent_gens:tt)*] > $(where $($where_clause:tt)+)?) => {
+            inherit!(@inner [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$($head_parent_gens)*] [$($($where_clause)+)?]);
+        };
+        // continue matching generics after $parent_class_name
+        (@munch_head_parent_name [$($tail_gens:tt)*] [$class_name:ident] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] [$parent_class_name:ident] [$($head_parent_gens:tt)*] $add:tt $($rest:tt)*) => {
+            inherit!(@munch_head_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [$($head_parent_gens)* $add] $($rest)*);
+        };
+    
+        // Munch complete
+    
+        (@inner
+            [$($($tail_gens:tt)+)?]
+            [$class_name:ident]
+            [$($($head_gens:tt)+)?]
+            [$($($tail_parent_gens:tt)+)?]
+            [$parent_class_name:ident]
+            [$($($head_parent_gens:tt)+)?]
+            [$($($where_clause:tt)+)?]
+        ) => {
+            impl $(<$($tail_gens)+>)? $crate::Inherit<$class_name $(<$($head_gens)*>)?> for $class_name $(<$($head_gens)*>)? $(where $($where_clause)+)? {}
+            impl $(<$($tail_gens)+>)? $crate::Class<$crate::Object> for $class_name $(<$($head_gens)*>)? $(where $($where_clause)+)? {
+                type Type = $class_name $(<$($head_gens)*>)?;
+                type Parent = $parent_class_name $(<$($head_parent_gens)*>)?;
+            }
+    
+            impl<$($($tail_gens)+, )? $($($tail_parent_gens)+, )? ClassInheritorObject> $crate::Class<$class_name $(<$($head_gens)*>)?> for ClassInheritorObject
+            where
+                ClassInheritorObject: $crate::Class<$crate::Object>,
+                <ClassInheritorObject as $crate::Class<$crate::Object>>::Type: $crate::Inherit<$class_name $(<$($head_gens)*>)?>
+                $(, $($where_clause)+)?
+            {
+                type Type = ClassInheritorObject;
+                type Parent = $parent_class_name $(<$($head_parent_gens)*>)?;
+            }
+    
+            impl<$($($tail_gens)+, )? ClassInheritorObject> $crate::Inherit<$class_name $(<$($head_gens)*>)?> for ClassInheritorObject
+            where
+                ClassInheritorObject: $crate::Class<$crate::Object>,
+                ClassInheritorObject: $crate::Class<<ClassInheritorObject as $crate::Class<$crate::Object>>::Type>,
+                <ClassInheritorObject as $crate::Class<<ClassInheritorObject as $crate::Class<$crate::Object>>::Type>>::Parent: $crate::Inherit<$class_name $(<$($head_gens)*>)?>
+                $(, $($where_clause)+)?
+            {}
+        };
+    }
 }
-
-pub struct Object;
-pub trait Class<T> { type Type; type Parent; }
-pub trait Inherit<T> {}
-impl Inherit<Object> for Object {}
 
 //
 pub struct Animal;
-inherit_impl!(Animal => Object);
+inherit!(Animal => Object);
 
 //
 pub struct Dog;
-inherit_impl!(Dog => Animal);
+inherit!(Dog => Animal);
 
 //
 pub struct Wolf;
-inherit_impl!(Wolf => Dog);
+inherit!(Wolf => Dog);
 
 //
 pub struct Warg;
-inherit_impl!(Warg => Dog);
+inherit!(Warg => Dog);
 
 //
 pub struct DireWolf<'a, T> { p: PhantomData<&'a T> }
-inherit_impl!(<'a, T> DireWolf<'a, T> => Wolf);
+inherit!(<'a, T> DireWolf<'a, T> => Wolf);
 
 //
 pub struct MightyWarg<T>(T);
-inherit_impl!(<T> MightyWarg<T> => Warg);
+inherit!(<T> MightyWarg<T> => Warg);
 
 //
 pub struct FerociousWarg<T> { p: PhantomData<T> }
-inherit_impl!(<T> FerociousWarg<T> => Warg);
+inherit!(<T> FerociousWarg<T> => Warg);
 
 //
 pub struct LevelBoss<T, U>(T, U);
-inherit_impl!(<T, U> LevelBoss<T, U> => FerociousWarg<T>);
+inherit!(<T, U> LevelBoss<T, U> => FerociousWarg<T>);
 
 //
 pub struct BranchBoss<T, U>(T, U);
-inherit_impl!(<'a, T, U> BranchBoss<MightyWarg<T>, LevelBoss<T, &'a U>> => FerociousWarg<T> where U: Class<Wolf>);
+inherit!(<'a, T, U> BranchBoss<MightyWarg<T>, LevelBoss<T, &'a U>> => FerociousWarg<T> where U: Class<Wolf>);
 
 
 #[cfg(test)]
