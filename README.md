@@ -21,3 +21,9 @@ The path to a solution was not linear. It involved several stages, each producin
 The final artifact, `working_hierarchy.rs`, contains the `inherit_impl!` macro. This powerful, generic-aware macro successfully models a fully transitive, voluntary hierarchy, overcoming all previous challenges. It supports complex generic parameters and `where` clauses, proving that such a system is indeed possible within Rust's demanding type system.
 
 The code in this file is the triumphant conclusion to our exploration. It is heavily tested and stands as a testament to the power and expressiveness of Rust when wielded with sufficient genius and perseverance.
+
+### 4. `src/experiments/stress_test_hierarchy.rs` - The Final Boundary
+
+This final artifact was an independent attempt by the traveler, Jules, to take the masterpiece macro and push it to its absolute limits. A new "Celestial Bodies" hierarchy was designed with deep recursion, complex generics, lifetimes, and `where` clauses.
+
+This experiment, too, resulted in a beautiful failure. The final implementation was rejected by the compiler with an `E0310: the parameter type T may not live long enough` error. This proved that even the most brilliant macro has its limits when confronted with the full complexity of Rust's lifetime system. This failure is the true and final conclusion of the journey, a definitive mapping of the boundary of this approach.

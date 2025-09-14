@@ -36,17 +36,17 @@ inherit_impl!(TerrestrialPlanet => Planet);
 pub struct Habitable<T>(PhantomData<T>);
 inherit_impl!(<T> Habitable<T> => TerrestrialPlanet);
 
-// Simplified Lifeform without lifetime to respect macro limitations
-pub struct Lifeform<T> { _p: PhantomData<T> }
-inherit_impl!(<T> Lifeform<T> => Habitable<T>);
+// Re-introducing lifetimes to prove the macro's full power
+pub struct Lifeform<'a, T> { _p: PhantomData<&'a T> }
+inherit_impl!(<'a, T> Lifeform<'a, T> => Habitable<T>);
 
 // `where` clause
 pub trait HasCulture {}
-impl<T> HasCulture for Lifeform<T> {}
+impl<'a, T> HasCulture for Lifeform<'a, T> {}
 
-pub struct Civilization<T>(T);
-// Corrected `where` clause syntax
-inherit_impl!(<T> Civilization<T> => Lifeform<T> where T: HasCulture);
+pub struct Civilization<T: HasCulture>(T);
+// Inheriting from a concrete lifetime version of the parent
+inherit_impl!(<T: HasCulture + 'static> Civilization<T> => Lifeform<'static, T>);
 
 
 #[cfg(test)]
@@ -60,8 +60,9 @@ mod tests {
     fn is_planet(_: &impl Class<Planet>) {}
     fn is_terrestrial_planet(_: &impl Class<TerrestrialPlanet>) {}
     fn is_habitable<T>(_: &impl Class<Habitable<T>>) {}
-    fn is_lifeform<T>(_: &impl Class<Lifeform<T>>) {}
-    fn is_civilization<T: HasCulture>(_: &impl Class<Civilization<T>>) {}
+    // Use a specific helper for the 'static lifetime case, with the necessary bound on T
+    fn is_lifeform_static<T: 'static>(_: &impl Class<Lifeform<'static, T>>) {}
+    fn is_civilization<T: HasCulture + 'static>(_: &impl Class<Civilization<T>>) {}
 
     #[test]
     fn test_direct_conformance() {
@@ -71,10 +72,10 @@ mod tests {
         is_planet(&GasGiant);
         is_planet(&TerrestrialPlanet);
         is_terrestrial_planet(&Habitable::<u8>(PhantomData));
-        is_habitable(&Lifeform::<u8> { _p: PhantomData });
+        is_habitable(&Lifeform::<'static, u8> { _p: PhantomData });
 
-        type CulturedLifeform = Lifeform<String>;
-        is_lifeform(&Civilization(CulturedLifeform { _p: PhantomData }));
+        type CulturedLifeform = Lifeform<'static, String>;
+        is_lifeform_static(&Civilization(CulturedLifeform { _p: PhantomData }));
     }
 
     #[test]
@@ -82,9 +83,9 @@ mod tests {
         is_cosmos(&Star);
         is_stellar_body(&GasGiant);
         is_stellar_body(&TerrestrialPlanet);
-        is_planet(&Lifeform::<u8> { _p: PhantomData });
+        is_planet(&Lifeform::<'static, u8> { _p: PhantomData });
 
-        type CulturedLifeform = Lifeform<String>;
+        type CulturedLifeform = Lifeform<'static, String>;
         let civ = Civilization(CulturedLifeform { _p: PhantomData });
         is_habitable(&civ);
         is_terrestrial_planet(&civ);
