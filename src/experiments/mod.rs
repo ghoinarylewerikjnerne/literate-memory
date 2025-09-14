@@ -6,3 +6,4 @@ pub mod macro_class_hierarchy;
 pub mod new_art_experiment;
 pub mod voluntary_hierarchy;
 pub mod working_hierarchy;
+pub mod stress_test_hierarchy;
