@@ -28,7 +28,7 @@ mod inheritance {
         };
         // no generics before $class_name
         ($class_name:ty => $($rest:tt)*) => {
-            inherit!(@munch_parent_name [] [$class_name] [] $($rest)*);
+            inherit!(@munch_parent_name [] [$class_name] $($rest)*);
         };
         // continue matching generics before $class_name (multi > case)
         (@munch_tail_name [$($tail_gens:tt)*] >> $($rest:tt)*) => {
@@ -36,7 +36,7 @@ mod inheritance {
         };
         // finish matching generics before $class_name
         (@munch_tail_name [$($tail_gens:tt)*] > $class_name:ty => $($rest:tt)*) => {
-            inherit!(@munch_parent_name [$($tail_gens)*] [$class_name] [] $($rest)*);
+            inherit!(@munch_parent_name [$($tail_gens)*] [$class_name] $($rest)*);
         };
         // continue matching generics before $class_name
         (@munch_tail_name [$($tail_gens:tt)*] $add:tt $($rest:tt)*) => {
@@ -46,24 +46,24 @@ mod inheritance {
         // Tail parent name
     
         // with generics before $parent_class_name
-        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($head_gens:tt)*] < $add:tt $($rest:tt)*) => {
-            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$add] $($rest)*);
+        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ty] < $add:tt $($rest:tt)*) => {
+            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$add] $($rest)*);
         };
         // no generics before $parent_class_name
-        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($head_gens:tt)*] $parent_class_name:ty $(where $($where_clause:tt)*)?) => {
-            inherit!(@inner [$($tail_gens)*] [$class_name] [$($head_gens)*] [] [$parent_class_name] [] [$($($where_clause)+)?]);
+        (@munch_parent_name [$($tail_gens:tt)*] [$class_name:ty] $parent_class_name:ty $(where $($where_clause:tt)*)?) => {
+            inherit!(@inner [$($tail_gens)*] [$class_name] [] [$parent_class_name] [$($($where_clause)+)?]);
         };
         // continue matching generics before $parent_class_name (multi > case)
-        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] >> $($rest:tt)*) => {
-            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)* >] > $($rest)*);
+        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($tail_parent_gens:tt)*] >> $($rest:tt)*) => {
+            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($tail_parent_gens)* >] > $($rest)*);
         };
         // finish matching generics before $parent_class_name
-        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] > $parent_class_name:ty $(where $($where_clause:tt)*)?) => {
-            inherit!(@inner [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)*] [$parent_class_name] [] [$($($where_clause)+)?]);
+        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($tail_parent_gens:tt)*] > $parent_class_name:ty $(where $($where_clause:tt)*)?) => {
+            inherit!(@inner [$($tail_gens)*] [$class_name] [$($tail_parent_gens)*] [$parent_class_name] [$($($where_clause)+)?]);
         };
         // continue matching generics before $parent_class_name
-        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($head_gens:tt)*] [$($tail_parent_gens:tt)*] $add:tt $($rest:tt)*) => {
-            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($head_gens)*] [$($tail_parent_gens)* $add] $($rest)*);
+        (@munch_tail_parent_name [$($tail_gens:tt)*] [$class_name:ty] [$($tail_parent_gens:tt)*] $add:tt $($rest:tt)*) => {
+            inherit!(@munch_tail_parent_name [$($tail_gens)*] [$class_name] [$($tail_parent_gens)* $add] $($rest)*);
         };
     
         // Munch complete
@@ -71,33 +71,31 @@ mod inheritance {
         (@inner
             [$($($tail_gens:tt)+)?]
             [$class_name:ty]
-            [$($($head_gens:tt)+)?]
             [$($($tail_parent_gens:tt)+)?]
             [$parent_class_name:ty]
-            [$($($head_parent_gens:tt)+)?]
             [$($($where_clause:tt)+)?]
         ) => {
-            impl $(<$($tail_gens)+>)? $crate::Inherit<$class_name $(<$($head_gens)*>)?> for $class_name $(<$($head_gens)*>)? $(where $($where_clause)+)? {}
-            impl $(<$($tail_gens)+>)? $crate::Class<$crate::Object> for $class_name $(<$($head_gens)*>)? $(where $($where_clause)+)? {
-                type Type = $class_name $(<$($head_gens)*>)?;
-                type Parent = $parent_class_name $(<$($head_parent_gens)*>)?;
+            impl $(<$($tail_gens)+>)? $crate::Inherit<$class_name> for $class_name $(where $($where_clause)+)? {}
+            impl $(<$($tail_gens)+>)? $crate::Class<$crate::Object> for $class_name $(where $($where_clause)+)? {
+                type Type = $class_name;
+                type Parent = $parent_class_name;
             }
     
-            impl<$($($tail_gens)+, )? $($($tail_parent_gens)+, )? ClassInheritorObject> $crate::Class<$class_name $(<$($head_gens)*>)?> for ClassInheritorObject
+            impl<$($($tail_gens)+, )? $($($tail_parent_gens)+, )? ClassInheritorObject> $crate::Class<$class_name> for ClassInheritorObject
             where
                 ClassInheritorObject: $crate::Class<$crate::Object>,
-                <ClassInheritorObject as $crate::Class<$crate::Object>>::Type: $crate::Inherit<$class_name $(<$($head_gens)*>)?>
+                <ClassInheritorObject as $crate::Class<$crate::Object>>::Type: $crate::Inherit<$class_name>
                 $(, $($where_clause)+)?
             {
                 type Type = ClassInheritorObject;
-                type Parent = $parent_class_name $(<$($head_parent_gens)*>)?;
+                type Parent = $parent_class_name;
             }
     
-            impl<$($($tail_gens)+, )? ClassInheritorObject> $crate::Inherit<$class_name $(<$($head_gens)*>)?> for ClassInheritorObject
+            impl<$($($tail_gens)+, )? ClassInheritorObject> $crate::Inherit<$class_name> for ClassInheritorObject
             where
                 ClassInheritorObject: $crate::Class<$crate::Object>,
                 ClassInheritorObject: $crate::Class<<ClassInheritorObject as $crate::Class<$crate::Object>>::Type>,
-                <ClassInheritorObject as $crate::Class<<ClassInheritorObject as $crate::Class<$crate::Object>>::Type>>::Parent: $crate::Inherit<$class_name $(<$($head_gens)*>)?>
+                <ClassInheritorObject as $crate::Class<<ClassInheritorObject as $crate::Class<$crate::Object>>::Type>>::Parent: $crate::Inherit<$class_name>
                 $(, $($where_clause)+)?
             {}
         };
