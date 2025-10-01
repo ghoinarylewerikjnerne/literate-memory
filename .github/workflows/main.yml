@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-cache:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Homebrew prefix
+        id: brew
+        run: echo "prefix=$(brew --prefix)" >> $GITHUB_OUTPUT
+
+      - name: Cache Homebrew dependencies
+        id: cache-brew-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.brew.outputs.prefix }}/Cellar/gcc
+            ${{ steps.brew.outputs.prefix }}/Cellar/binutils
+            ${{ steps.brew.outputs.prefix }}/Cellar/cmake
+          key: ${{ runner.os }}-brew-deps-v1-${{ hashFiles('.github/workflows/main.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-brew-deps-v1-
+
+      - name: Install dependencies if cache missed
+        if: steps.cache-brew-deps.outputs.cache-hit != 'true'
+        run: |
+          brew install gcc binutils cmake
+
+      - name: Link dependencies
+        run: |
+          brew link --overwrite gcc || true
+          brew link --overwrite binutils || true
+          brew link --overwrite cmake || true
+
+      - name: Verify installation
+        run: |
+          which gcc
+          which ar
+          which ccmake
+          gcc --version
+          ar --version
+          ccmake --version
